@@ -1,0 +1,1095 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>N5 Kanji — Learn & Remember</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;500;700&family=DM+Sans:wght@300;400;500&family=DM+Mono&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink:      #1C1917;
+    --paper:    #F7F3EE;
+    --warm:     #EDE8E1;
+    --accent:   #C0392B;
+    --accent2:  #E67E22;
+    --muted:    #8A837A;
+    --border:   rgba(0,0,0,0.1);
+    --card-bg:  #FFFFFF;
+    --shadow:   0 2px 20px rgba(0,0,0,0.07);
+    --font-jp:  'Shippori Mincho', serif;
+    --font-ui:  'DM Sans', sans-serif;
+    --font-mono:'DM Mono', monospace;
+    --radius:   12px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--font-ui);
+    background: var(--paper);
+    color: var(--ink);
+    min-height: 100vh;
+  }
+
+  /* ── LAYOUT ── */
+  .app { display: flex; min-height: 100vh; }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    width: 260px;
+    flex-shrink: 0;
+    background: var(--ink);
+    color: #F7F3EE;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+  }
+  .sidebar-header {
+    padding: 28px 24px 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+  .sidebar-header .logo {
+    font-family: var(--font-jp);
+    font-size: 28px;
+    font-weight: 700;
+    color: #fff;
+    display: block;
+    margin-bottom: 4px;
+  }
+  .sidebar-header .subtitle {
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.4);
+  }
+
+  .sidebar-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: rgba(255,255,255,0.06);
+    margin: 20px 20px;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .stat-box {
+    background: rgba(255,255,255,0.04);
+    padding: 12px 14px;
+    text-align: center;
+  }
+  .stat-num { font-size: 22px; font-weight: 500; color: #fff; font-family: var(--font-mono); }
+  .stat-lbl { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,0.35); margin-top: 2px; }
+
+  .sidebar-nav { padding: 0 12px; flex: 1; }
+  .nav-group-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: rgba(255,255,255,0.25);
+    padding: 14px 12px 6px;
+  }
+  .nav-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 9px 12px;
+    border-radius: 8px;
+    border: none;
+    background: none;
+    color: rgba(255,255,255,0.55);
+    font-family: var(--font-ui);
+    font-size: 13.5px;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.15s;
+    margin-bottom: 2px;
+  }
+  .nav-btn:hover { background: rgba(255,255,255,0.07); color: #fff; }
+  .nav-btn.active { background: var(--accent); color: #fff; }
+  .nav-btn .icon { font-size: 16px; width: 20px; text-align: center; flex-shrink: 0; }
+  .nav-btn .count {
+    margin-left: auto;
+    font-size: 11px;
+    background: rgba(255,255,255,0.12);
+    padding: 1px 7px;
+    border-radius: 20px;
+    font-family: var(--font-mono);
+  }
+  .nav-btn.active .count { background: rgba(255,255,255,0.25); }
+
+  .sidebar-progress {
+    padding: 16px 20px 24px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+  }
+  .progress-label { font-size: 11px; color: rgba(255,255,255,0.35); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
+  .progress-bar { height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden; }
+  .progress-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.4s ease; }
+  .progress-text { font-size: 12px; color: rgba(255,255,255,0.4); margin-top: 6px; font-family: var(--font-mono); }
+
+  /* ── MAIN ── */
+  .main { flex: 1; overflow-y: auto; }
+
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 32px;
+    border-bottom: 1px solid var(--border);
+    background: var(--paper);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    backdrop-filter: blur(8px);
+  }
+  .topbar-title { font-family: var(--font-jp); font-size: 20px; font-weight: 500; }
+  .topbar-desc { font-size: 13px; color: var(--muted); margin-top: 1px; }
+
+  .search-wrap { position: relative; }
+  .search-wrap input {
+    padding: 8px 14px 8px 36px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--warm);
+    font-family: var(--font-ui);
+    font-size: 13px;
+    color: var(--ink);
+    outline: none;
+    width: 200px;
+    transition: border-color 0.15s;
+  }
+  .search-wrap input:focus { border-color: var(--accent); }
+  .search-icon { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 14px; pointer-events: none; }
+
+  .content { padding: 28px 32px; }
+
+  /* ── SECTIONS ── */
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* ── KANJI GRID ── */
+  .kanji-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 14px;
+  }
+
+  .kanji-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.18s, box-shadow 0.18s;
+    position: relative;
+  }
+  .kanji-card:hover { transform: translateY(-3px); box-shadow: 0 8px 28px rgba(0,0,0,0.1); }
+  .kanji-card.mastered { border-color: #27AE6033; }
+  .kanji-card.mastered::after {
+    content: '✓';
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 18px; height: 18px;
+    background: #27AE60;
+    color: white;
+    border-radius: 50%;
+    font-size: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700;
+  }
+  .kc-top {
+    padding: 18px 16px 14px;
+    text-align: center;
+    background: linear-gradient(135deg, #FAF7F4, #F0EBE4);
+    border-bottom: 1px solid var(--border);
+  }
+  .kc-char {
+    font-family: var(--font-jp);
+    font-size: 52px;
+    line-height: 1;
+    color: var(--ink);
+    display: block;
+  }
+  .kc-stroke { font-size: 10px; color: var(--muted); margin-top: 4px; font-family: var(--font-mono); }
+  .kc-body { padding: 12px 14px; }
+  .kc-meaning { font-size: 14px; font-weight: 500; margin-bottom: 4px; }
+  .kc-reading {
+    font-size: 11px;
+    color: var(--muted);
+    font-family: var(--font-mono);
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+  }
+  .reading-tag {
+    background: var(--warm);
+    padding: 1px 7px;
+    border-radius: 4px;
+    font-size: 11px;
+  }
+  .kc-mnemonic {
+    font-size: 12px;
+    color: #6B5A4E;
+    background: #FDF6EE;
+    border-left: 2px solid var(--accent2);
+    padding: 6px 8px;
+    border-radius: 0 4px 4px 0;
+    line-height: 1.5;
+    font-style: italic;
+  }
+
+  /* ── DETAIL PANEL (modal) ── */
+  .overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.4);
+    backdrop-filter: blur(4px);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+  .overlay.open { display: flex; }
+  .detail-panel {
+    background: var(--card-bg);
+    border-radius: 16px;
+    width: 560px;
+    max-width: 95vw;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.25);
+    animation: popIn 0.2s ease;
+  }
+  @keyframes popIn { from { transform: scale(0.94); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+  .dp-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+    padding: 28px 28px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .dp-char-box {
+    width: 100px; height: 100px;
+    background: linear-gradient(135deg, #FAF7F4, #EDE6DC);
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    border: 1px solid var(--border);
+  }
+  .dp-char { font-family: var(--font-jp); font-size: 64px; line-height: 1; }
+  .dp-info { flex: 1; }
+  .dp-meaning { font-size: 22px; font-weight: 500; margin-bottom: 6px; }
+  .dp-readings { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+  .dp-reading-pill {
+    font-size: 12px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-family: var(--font-mono);
+  }
+  .pill-on  { background: #FEE7D6; color: #7A2E0E; }
+  .pill-kun { background: #E3F0FB; color: #1A4A75; }
+  .pill-label { font-size: 10px; color: var(--muted); align-self: center; text-transform: uppercase; letter-spacing: 0.5px; }
+  .dp-strokes { font-size: 12px; color: var(--muted); font-family: var(--font-mono); }
+
+  .dp-close {
+    margin-left: auto;
+    background: none;
+    border: none;
+    font-size: 22px;
+    color: var(--muted);
+    cursor: pointer;
+    line-height: 1;
+    align-self: flex-start;
+    padding: 4px;
+  }
+  .dp-close:hover { color: var(--ink); }
+
+  .dp-body { padding: 20px 28px 28px; }
+  .dp-section-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--muted);
+    margin-bottom: 10px;
+    margin-top: 20px;
+  }
+  .dp-section-title:first-child { margin-top: 0; }
+
+  .mnemonic-box {
+    background: #FDF6EE;
+    border: 1px solid #F0D9BC;
+    border-radius: 10px;
+    padding: 14px 16px;
+    font-size: 14px;
+    line-height: 1.65;
+    color: #5C3D20;
+  }
+  .mnemonic-box strong { color: var(--accent); }
+
+  .examples-list { display: flex; flex-direction: column; gap: 8px; }
+  .example-item {
+    background: var(--warm);
+    border-radius: 8px;
+    padding: 10px 14px;
+  }
+  .ex-jp { font-family: var(--font-jp); font-size: 16px; margin-bottom: 3px; }
+  .ex-rom { font-size: 12px; color: var(--muted); font-family: var(--font-mono); }
+  .ex-en { font-size: 13px; color: #5f5e5a; }
+
+  .dp-actions { display: flex; gap: 8px; margin-top: 20px; }
+  .dp-btn {
+    flex: 1;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    font-family: var(--font-ui);
+    font-size: 13px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.15s;
+  }
+  .dp-btn.primary { background: var(--accent); color: white; border-color: var(--accent); }
+  .dp-btn.primary:hover { background: #A93226; }
+  .dp-btn.secondary { background: var(--card-bg); color: var(--ink); }
+  .dp-btn.secondary:hover { background: var(--warm); }
+
+  /* ── QUIZ SECTION ── */
+  .quiz-wrap { max-width: 480px; margin: 0 auto; }
+  .quiz-header { text-align: center; margin-bottom: 32px; }
+  .quiz-header h2 { font-family: var(--font-jp); font-size: 24px; margin-bottom: 6px; }
+  .quiz-header p { font-size: 14px; color: var(--muted); }
+
+  .qprogress-row { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+  .qprogress-bar { flex: 1; height: 5px; background: var(--warm); border-radius: 3px; overflow: hidden; }
+  .qprogress-fill { height: 100%; background: var(--accent); border-radius: 3px; transition: width 0.35s; }
+  .qprogress-num { font-size: 12px; color: var(--muted); font-family: var(--font-mono); white-space: nowrap; }
+
+  .quiz-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 36px 28px;
+    text-align: center;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow);
+  }
+  .quiz-char {
+    font-family: var(--font-jp);
+    font-size: 88px;
+    line-height: 1;
+    display: block;
+    margin-bottom: 10px;
+  }
+  .quiz-mode-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+
+  .quiz-options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .q-opt {
+    padding: 14px 12px;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    background: var(--card-bg);
+    font-family: var(--font-ui);
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: center;
+    color: var(--ink);
+  }
+  .q-opt:hover:not(:disabled) { border-color: var(--accent); background: #FEF0EE; }
+  .q-opt.correct { background: #EAF7EE; border-color: #27AE60; color: #155724; }
+  .q-opt.wrong   { background: #FDECEC; border-color: #C0392B; color: #5C0A0A; }
+
+  .quiz-feedback {
+    text-align: center;
+    min-height: 28px;
+    font-size: 14px;
+    margin-top: 14px;
+  }
+  .feedback-correct { color: #27AE60; font-weight: 500; }
+  .feedback-wrong   { color: var(--accent); }
+
+  .quiz-next-btn {
+    display: none;
+    margin: 16px auto 0;
+    padding: 11px 32px;
+    background: var(--ink);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-family: var(--font-ui);
+    font-size: 14px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .quiz-next-btn:hover { background: #333; }
+
+  .quiz-score-box {
+    display: flex;
+    justify-content: center;
+    gap: 28px;
+    margin-bottom: 20px;
+  }
+  .qs-item { text-align: center; }
+  .qs-num { font-size: 28px; font-weight: 500; font-family: var(--font-mono); }
+  .qs-lbl { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+  .qs-num.green { color: #27AE60; }
+  .qs-num.red   { color: var(--accent); }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 700px) {
+    .sidebar { display: none; }
+    .topbar { padding: 14px 16px; }
+    .content { padding: 16px; }
+    .kanji-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+  }
+
+  .empty-msg { color: var(--muted); font-size: 14px; text-align: center; padding: 48px 0; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <span class="logo">漢字</span>
+      <span class="subtitle">JLPT N5 · Kanji Study</span>
+    </div>
+
+    <div class="sidebar-stats">
+      <div class="stat-box">
+        <div class="stat-num" id="stat-total">80</div>
+        <div class="stat-lbl">Total</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num" id="stat-mastered">0</div>
+        <div class="stat-lbl">Mastered</div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-group-label">Browse</div>
+      <button class="nav-btn active" onclick="switchSection('all')" id="nav-all">
+        <span class="icon">🗂</span> All Kanji <span class="count">80</span>
+      </button>
+      <button class="nav-btn" onclick="switchSection('mastered')" id="nav-mastered">
+        <span class="icon">✅</span> Mastered <span class="count" id="nc-mastered">0</span>
+      </button>
+
+      <div class="nav-group-label">Categories</div>
+      <button class="nav-btn" onclick="filterCategory('numbers')" id="nav-numbers">
+        <span class="icon">🔢</span> Numbers <span class="count">11</span>
+      </button>
+      <button class="nav-btn" onclick="filterCategory('time')" id="nav-time">
+        <span class="icon">🕐</span> Time <span class="count">8</span>
+      </button>
+      <button class="nav-btn" onclick="filterCategory('people')" id="nav-people">
+        <span class="icon">👤</span> People <span class="count">8</span>
+      </button>
+      <button class="nav-btn" onclick="filterCategory('nature')" id="nav-nature">
+        <span class="icon">🌿</span> Nature <span class="count">12</span>
+      </button>
+      <button class="nav-btn" onclick="filterCategory('body')" id="nav-body">
+        <span class="icon">🫁</span> Body <span class="count">5</span>
+      </button>
+      <button class="nav-btn" onclick="filterCategory('place')" id="nav-place">
+        <span class="icon">📍</span> Places <span class="count">9</span>
+      </button>
+      <button class="nav-btn" onclick="filterCategory('things')" id="nav-things">
+        <span class="icon">📦</span> Things <span class="count">13</span>
+      </button>
+      <button class="nav-btn" onclick="filterCategory('verbs')" id="nav-verbs">
+        <span class="icon">⚡</span> Verbs <span class="count">14</span>
+      </button>
+
+      <div class="nav-group-label">Practice</div>
+      <button class="nav-btn" onclick="switchSection('quiz')" id="nav-quiz">
+        <span class="icon">🎯</span> Quiz
+      </button>
+    </nav>
+
+    <div class="sidebar-progress">
+      <div class="progress-label">Overall Progress</div>
+      <div class="progress-bar"><div class="progress-fill" id="sidebar-prog" style="width:0%"></div></div>
+      <div class="progress-text" id="sidebar-prog-text">0 / 80 mastered</div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="topbar-title" id="section-title">All N5 Kanji</div>
+        <div class="topbar-desc" id="section-desc">80 kanji · Click any card for details & mnemonic</div>
+      </div>
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input type="text" placeholder="Search kanji…" id="search-input" oninput="handleSearch()">
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- ALL / FILTERED VIEW -->
+      <div id="sec-all" class="section active">
+        <div class="kanji-grid" id="kanji-grid"></div>
+        <div class="empty-msg" id="empty-msg" style="display:none">No kanji found.</div>
+      </div>
+
+      <!-- QUIZ -->
+      <div id="sec-quiz" class="section">
+        <div class="quiz-wrap">
+          <div class="quiz-header">
+            <h2>漢字クイズ</h2>
+            <p>Choose the correct meaning for each kanji</p>
+          </div>
+          <div class="quiz-score-box">
+            <div class="qs-item"><div class="qs-num green" id="q-correct">0</div><div class="qs-lbl">Correct</div></div>
+            <div class="qs-item"><div class="qs-num" id="q-total">0</div><div class="qs-lbl">Answered</div></div>
+            <div class="qs-item"><div class="qs-num red" id="q-wrong">0</div><div class="qs-lbl">Wrong</div></div>
+          </div>
+          <div class="qprogress-row">
+            <div class="qprogress-bar"><div class="qprogress-fill" id="qpfill" style="width:0%"></div></div>
+            <div class="qprogress-num" id="qpnum">0 / 20</div>
+          </div>
+          <div class="quiz-card">
+            <span class="quiz-char" id="q-char">日</span>
+            <div class="quiz-mode-label">What does this kanji mean?</div>
+          </div>
+          <div class="quiz-options" id="q-opts"></div>
+          <div class="quiz-feedback" id="q-feedback"></div>
+          <button class="quiz-next-btn" id="q-next" onclick="nextQuestion()">Next →</button>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- DETAIL OVERLAY -->
+<div class="overlay" id="overlay" onclick="closeOverlay(event)">
+  <div class="detail-panel" id="detail-panel">
+    <div class="dp-header">
+      <div class="dp-char-box"><span class="dp-char" id="dp-char"></span></div>
+      <div class="dp-info">
+        <div class="dp-meaning" id="dp-meaning"></div>
+        <div class="dp-readings" id="dp-readings"></div>
+        <div class="dp-strokes" id="dp-strokes"></div>
+      </div>
+      <button class="dp-close" onclick="closeDetail()">✕</button>
+    </div>
+    <div class="dp-body">
+      <div class="dp-section-title">🧠 Mnemonic</div>
+      <div class="mnemonic-box" id="dp-mnemonic"></div>
+      <div class="dp-section-title">📝 Example Words</div>
+      <div class="examples-list" id="dp-examples"></div>
+      <div class="dp-actions">
+        <button class="dp-btn secondary" onclick="closeDetail()">Close</button>
+        <button class="dp-btn primary" id="dp-master-btn" onclick="toggleMaster()">Mark as Mastered ✓</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ────────────────────────────────────────────────
+// KANJI DATA
+// ────────────────────────────────────────────────
+const KANJI = [
+  // NUMBERS
+  { char:'一', meaning:'One', on:'イチ', kun:'ひと-つ', strokes:1, cat:'numbers',
+    mnemonic:'A single <strong>horizontal stroke</strong> — one line, one meaning. Like a horizon stretching across the page.', 
+    examples:[{jp:'一つ',rom:'hitotsu',en:'one (thing)'},{jp:'一月',rom:'ichigatsu',en:'January'}]},
+  { char:'二', meaning:'Two', on:'ニ', kun:'ふた-つ', strokes:2, cat:'numbers',
+    mnemonic:'<strong>Two parallel lines</strong>, like train tracks heading into the distance — two rails, two.',
+    examples:[{jp:'二つ',rom:'futatsu',en:'two (things)'},{jp:'二月',rom:'nigatsu',en:'February'}]},
+  { char:'三', meaning:'Three', on:'サン', kun:'みっ-つ', strokes:3, cat:'numbers',
+    mnemonic:'<strong>Three stacked lines</strong> — like floors of a building going up: one, two, three.',
+    examples:[{jp:'三つ',rom:'mittsu',en:'three (things)'},{jp:'三月',rom:'sangatsu',en:'March'}]},
+  { char:'四', meaning:'Four', on:'シ', kun:'よっ-つ', strokes:5, cat:'numbers',
+    mnemonic:'Imagine a box with legs — like a <strong>four-legged table</strong> seen from above. Four legs, four.',
+    examples:[{jp:'四つ',rom:'yottsu',en:'four (things)'},{jp:'四月',rom:'shigatsu',en:'April'}]},
+  { char:'五', meaning:'Five', on:'ゴ', kun:'いつ-つ', strokes:4, cat:'numbers',
+    mnemonic:'Think of a hand with <strong>five fingers</strong>. The top stroke is the fingertips, the hook is the wrist.',
+    examples:[{jp:'五つ',rom:'itsutsu',en:'five (things)'},{jp:'五月',rom:'gogatsu',en:'May'}]},
+  { char:'六', meaning:'Six', on:'ロク', kun:'むっ-つ', strokes:4, cat:'numbers',
+    mnemonic:'A person with legs <strong>spread wide</strong> — counting to six on both hands, sprawled out.',
+    examples:[{jp:'六つ',rom:'muttsu',en:'six (things)'},{jp:'六月',rom:'rokugatsu',en:'June'}]},
+  { char:'七', meaning:'Seven', on:'シチ', kun:'なな-つ', strokes:2, cat:'numbers',
+    mnemonic:'It <strong>looks like the number 7</strong> itself — a stroke across, then a diagonal slash down. Lucky seven!',
+    examples:[{jp:'七つ',rom:'nanatsu',en:'seven (things)'},{jp:'七月',rom:'shichigatsu',en:'July'}]},
+  { char:'八', meaning:'Eight', on:'ハチ', kun:'やっ-つ', strokes:2, cat:'numbers',
+    mnemonic:'Two strokes <strong>spreading apart</strong>, like two arms opening wide to welcome the eighth guest.',
+    examples:[{jp:'八つ',rom:'yattsu',en:'eight (things)'},{jp:'八月',rom:'hachigatsu',en:'August'}]},
+  { char:'九', meaning:'Nine', on:'キュウ, ク', kun:'ここの-つ', strokes:2, cat:'numbers',
+    mnemonic:'A <strong>hook catching a fish</strong>. You cast nine times before you catch one — nine casts, nine.',
+    examples:[{jp:'九つ',rom:'kokonotsu',en:'nine (things)'},{jp:'九月',rom:'kugatsu',en:'September'}]},
+  { char:'十', meaning:'Ten', on:'ジュウ', kun:'とお', strokes:2, cat:'numbers',
+    mnemonic:'A <strong>cross / plus sign</strong> — add all single digits together and you get ten. A perfect cross.',
+    examples:[{jp:'十',rom:'juu',en:'ten'},{jp:'十月',rom:'juugatsu',en:'October'}]},
+  { char:'百', meaning:'Hundred', on:'ヒャク', kun:'—', strokes:6, cat:'numbers',
+    mnemonic:'The character for <strong>one (一) sitting on a white box</strong>. One white thing = one hundred white things.',
+    examples:[{jp:'百円',rom:'hyakuen',en:'100 yen'},{jp:'三百',rom:'sanhyaku',en:'three hundred'}]},
+
+  // TIME
+  { char:'日', meaning:'Sun / Day', on:'ニチ, ジツ', kun:'ひ, か', strokes:4, cat:'time',
+    mnemonic:'A <strong>window with the sun</strong> shining through — you see the bright disc framed by the window bars.',
+    examples:[{jp:'今日',rom:'kyou',en:'today'},{jp:'日本',rom:'nihon',en:'Japan'}]},
+  { char:'月', meaning:'Moon / Month', on:'ゲツ, ガツ', kun:'つき', strokes:4, cat:'time',
+    mnemonic:'A <strong>crescent moon</strong> — the two inner strokes are the moon\'s reflection on a still lake.',
+    examples:[{jp:'月曜日',rom:'getsuyoubi',en:'Monday'},{jp:'一月',rom:'ichigatsu',en:'January'}]},
+  { char:'年', meaning:'Year', on:'ネン', kun:'とし', strokes:6, cat:'time',
+    mnemonic:'Imagine a person (<strong>人</strong>) carrying a <strong>heavy load of crops</strong> after a year of harvesting.',
+    examples:[{jp:'今年',rom:'kotoshi',en:'this year'},{jp:'来年',rom:'rainen',en:'next year'}]},
+  { char:'時', meaning:'Time / Hour', on:'ジ', kun:'とき', strokes:10, cat:'time',
+    mnemonic:'Sun (日) + temple (寺): the <strong>temple bell rings</strong> every hour to mark time — temple time.',
+    examples:[{jp:'今時',rom:'imadoki',en:'nowadays'},{jp:'何時',rom:'nanji',en:'what time'}]},
+  { char:'間', meaning:'Between / Interval', on:'カン', kun:'あいだ, ま', strokes:12, cat:'time',
+    mnemonic:'A <strong>door (門) with sunlight (日) peeking through</strong> — the gap between door panels where light sneaks in.',
+    examples:[{jp:'時間',rom:'jikan',en:'time / duration'},{jp:'人間',rom:'ningen',en:'human being'}]},
+  { char:'今', meaning:'Now / Present', on:'コン, キン', kun:'いま', strokes:4, cat:'time',
+    mnemonic:'A roof over a person bowing — someone <strong>arriving right now</strong>, bowing at the door.',
+    examples:[{jp:'今日',rom:'kyou',en:'today'},{jp:'今夜',rom:'konya',en:'tonight'}]},
+  { char:'前', meaning:'Before / Front', on:'ゼン', kun:'まえ', strokes:9, cat:'time',
+    mnemonic:'Moon (月) + sword (刀): the <strong>sword cuts what\'s in front</strong>, the moon lights the path ahead.',
+    examples:[{jp:'前',rom:'mae',en:'in front / before'},{jp:'午前',rom:'gozen',en:'AM'}]},
+  { char:'後', meaning:'After / Behind', on:'ゴ, コウ', kun:'あと, うし-ろ', strokes:9, cat:'time',
+    mnemonic:'Someone walking but <strong>looking back</strong> — they can only see what\'s behind (後) them.',
+    examples:[{jp:'後で',rom:'atode',en:'later'},{jp:'午後',rom:'gogo',en:'PM'}]},
+
+  // PEOPLE
+  { char:'人', meaning:'Person', on:'ジン, ニン', kun:'ひと', strokes:2, cat:'people',
+    mnemonic:'Two strokes — the silhouette of a <strong>person walking</strong>, one leg forward, one back.',
+    examples:[{jp:'日本人',rom:'nihonjin',en:'Japanese person'},{jp:'人々',rom:'hitobito',en:'people'}]},
+  { char:'女', meaning:'Woman', on:'ジョ, ニョ', kun:'おんな', strokes:3, cat:'people',
+    mnemonic:'A <strong>woman kneeling gracefully</strong>, arms extended — a traditional seated posture.',
+    examples:[{jp:'女の子',rom:'onnano ko',en:'girl'},{jp:'女性',rom:'josei',en:'woman'}]},
+  { char:'男', meaning:'Man', on:'ダン, ナン', kun:'おとこ', strokes:7, cat:'people',
+    mnemonic:'Field (田) + power (力): a <strong>man using strength to work the field</strong>.',
+    examples:[{jp:'男の子',rom:'otoko no ko',en:'boy'},{jp:'男性',rom:'dansei',en:'man'}]},
+  { char:'子', meaning:'Child', on:'シ', kun:'こ', strokes:3, cat:'people',
+    mnemonic:'A <strong>child with arms outstretched</strong> — you can see the little body and two arms reaching up.',
+    examples:[{jp:'子供',rom:'kodomo',en:'child'},{jp:'女の子',rom:'onnano ko',en:'girl'}]},
+  { char:'父', meaning:'Father', on:'フ', kun:'ちち', strokes:4, cat:'people',
+    mnemonic:'A person holding an <strong>axe above their head</strong> — the strong father figure chopping wood.',
+    examples:[{jp:'お父さん',rom:'otousan',en:'father (polite)'},{jp:'父',rom:'chichi',en:'(my) father'}]},
+  { char:'母', meaning:'Mother', on:'ボ', kun:'はは', strokes:5, cat:'people',
+    mnemonic:'The character for <strong>woman (女) with two dots</strong> — dots like a mother\'s nurturing chest.',
+    examples:[{jp:'お母さん',rom:'okaasan',en:'mother (polite)'},{jp:'母',rom:'haha',en:'(my) mother'}]},
+  { char:'友', meaning:'Friend', on:'ユウ', kun:'とも', strokes:4, cat:'people',
+    mnemonic:'Two hands (<strong>又 twice</strong>) reaching toward each other — friends always reach out.',
+    examples:[{jp:'友達',rom:'tomodachi',en:'friend'},{jp:'友人',rom:'yuujin',en:'friend (formal)'}]},
+  { char:'王', meaning:'King', on:'オウ', kun:'おう', strokes:4, cat:'people',
+    mnemonic:'Three horizontal levels with one <strong>vertical pillar</strong> — the king stands tall connecting heaven, earth, and mankind.',
+    examples:[{jp:'王様',rom:'ousama',en:'king'},{jp:'王子',rom:'ouji',en:'prince'}]},
+
+  // NATURE
+  { char:'山', meaning:'Mountain', on:'サン', kun:'やま', strokes:3, cat:'nature',
+    mnemonic:'<strong>Three peaks</strong> of a mountain range — the tallest in the middle, smaller ones on either side.',
+    examples:[{jp:'富士山',rom:'fujisan',en:'Mt. Fuji'},{jp:'山田',rom:'yamada',en:'Yamada (surname)'}]},
+  { char:'川', meaning:'River', on:'セン', kun:'かわ', strokes:3, cat:'nature',
+    mnemonic:'Three <strong>flowing vertical lines</strong> — water streaming downward, just like a river flows.',
+    examples:[{jp:'川',rom:'kawa',en:'river'},{jp:'小川',rom:'ogawa',en:'stream'}]},
+  { char:'木', meaning:'Tree', on:'モク, ボク', kun:'き', strokes:4, cat:'nature',
+    mnemonic:'A <strong>tree with roots and branches</strong> — trunk going up, two branches left/right, roots below.',
+    examples:[{jp:'木曜日',rom:'mokuyoubi',en:'Thursday'},{jp:'木々',rom:'kigi',en:'trees'}]},
+  { char:'林', meaning:'Forest (small)', on:'リン', kun:'はやし', strokes:8, cat:'nature',
+    mnemonic:'<strong>Two trees</strong> (木木) side by side — a small cluster of trees, a grove.',
+    examples:[{jp:'林',rom:'hayashi',en:'grove / small forest'},{jp:'林業',rom:'ringyo',en:'forestry'}]},
+  { char:'森', meaning:'Forest (dense)', on:'シン', kun:'もり', strokes:12, cat:'nature',
+    mnemonic:'<strong>Three trees</strong> (木木木) — so many trees packed together it becomes a dense forest.',
+    examples:[{jp:'森',rom:'mori',en:'dense forest'},{jp:'森林',rom:'shinrin',en:'forest'}]},
+  { char:'火', meaning:'Fire', on:'カ', kun:'ひ', strokes:4, cat:'nature',
+    mnemonic:'A <strong>flame with sparks flying</strong> outward — the center stroke is the main fire, sides are sparks.',
+    examples:[{jp:'火曜日',rom:'kayoubi',en:'Tuesday'},{jp:'火事',rom:'kaji',en:'fire (disaster)'}]},
+  { char:'水', meaning:'Water', on:'スイ', kun:'みず', strokes:4, cat:'nature',
+    mnemonic:'Water <strong>flowing and splashing</strong> — the center stroke is the main stream, droplets flying out.',
+    examples:[{jp:'水曜日',rom:'suiyoubi',en:'Wednesday'},{jp:'水',rom:'mizu',en:'water'}]},
+  { char:'土', meaning:'Earth / Soil', on:'ド, ト', kun:'つち', strokes:3, cat:'nature',
+    mnemonic:'A <strong>cross planted in the ground</strong> — a marker stuck into the earth, ground below.',
+    examples:[{jp:'土曜日',rom:'doyoubi',en:'Saturday'},{jp:'土地',rom:'tochi',en:'land'}]},
+  { char:'空', meaning:'Sky / Empty', on:'クウ', kun:'そら, から', strokes:8, cat:'nature',
+    mnemonic:'A <strong>cave opening to open sky</strong> — hole in the cliff reveals endless blue sky above.',
+    examples:[{jp:'空',rom:'sora',en:'sky'},{jp:'空気',rom:'kuuki',en:'air'}]},
+  { char:'花', meaning:'Flower', on:'カ', kun:'はな', strokes:7, cat:'nature',
+    mnemonic:'Grass/plant radical on top, then the "change" character below — <strong>plants that change</strong> (bloom) beautifully.',
+    examples:[{jp:'花',rom:'hana',en:'flower'},{jp:'花火',rom:'hanabi',en:'fireworks'}]},
+  { char:'石', meaning:'Stone', on:'セキ', kun:'いし', strokes:5, cat:'nature',
+    mnemonic:'A <strong>cliff (厂) with a mouth beneath</strong> — a rock yawning open, heavy and ancient.',
+    examples:[{jp:'石',rom:'ishi',en:'stone'},{jp:'宝石',rom:'houseki',en:'gemstone'}]},
+  { char:'雨', meaning:'Rain', on:'ウ', kun:'あめ, あま', strokes:8, cat:'nature',
+    mnemonic:'A <strong>cloud (top stroke) with raindrops (dots) falling</strong> underneath — a sky full of rain.',
+    examples:[{jp:'雨',rom:'ame',en:'rain'},{jp:'大雨',rom:'oame',en:'heavy rain'}]},
+
+  // BODY
+  { char:'目', meaning:'Eye', on:'モク', kun:'め', strokes:5, cat:'body',
+    mnemonic:'A <strong>rectangular eye</strong> turned on its side — you can see the eyeball (inner lines) inside the lids.',
+    examples:[{jp:'目',rom:'me',en:'eye'},{jp:'目的',rom:'mokuteki',en:'goal / purpose'}]},
+  { char:'耳', meaning:'Ear', on:'ジ', kun:'みみ', strokes:6, cat:'body',
+    mnemonic:'An <strong>ear canal shape</strong> — three horizontal lines (the folds of the ear) with a handle on the right.',
+    examples:[{jp:'耳',rom:'mimi',en:'ear'},{jp:'耳鼻科',rom:'jibiika',en:'ENT clinic'}]},
+  { char:'口', meaning:'Mouth', on:'コウ, ク', kun:'くち', strokes:3, cat:'body',
+    mnemonic:'A simple <strong>open mouth</strong> — a square representing the opening of your mouth when you speak.',
+    examples:[{jp:'口',rom:'kuchi',en:'mouth'},{jp:'人口',rom:'jinkou',en:'population'}]},
+  { char:'手', meaning:'Hand', on:'シュ', kun:'て', strokes:4, cat:'body',
+    mnemonic:'A <strong>hand with four fingers spread</strong> above a wrist line — you can count the finger lines.',
+    examples:[{jp:'手',rom:'te',en:'hand'},{jp:'手紙',rom:'tegami',en:'letter (mail)'}]},
+  { char:'足', meaning:'Foot / Leg', on:'ソク', kun:'あし', strokes:7, cat:'body',
+    mnemonic:'The mouth radical (口) on top + a path below — <strong>a mouth that speaks with the feet</strong>, i.e. walks.',
+    examples:[{jp:'足',rom:'ashi',en:'foot / leg'},{jp:'足りる',rom:'tariru',en:'to be enough'}]},
+
+  // PLACES
+  { char:'上', meaning:'Up / Above', on:'ジョウ', kun:'うえ, のぼ-る', strokes:3, cat:'place',
+    mnemonic:'An <strong>arrow pointing up</strong> from a baseline — up is the direction above the line.',
+    examples:[{jp:'上',rom:'ue',en:'above / up'},{jp:'上手',rom:'jouzu',en:'skilled'}]},
+  { char:'下', meaning:'Down / Below', on:'カ, ゲ', kun:'した, くだ-る', strokes:3, cat:'place',
+    mnemonic:'An <strong>arrow pointing down</strong> from a baseline — the opposite of up, pointing toward the ground.',
+    examples:[{jp:'下',rom:'shita',en:'below / down'},{jp:'地下',rom:'chika',en:'underground'}]},
+  { char:'中', meaning:'Middle / Inside', on:'チュウ', kun:'なか', strokes:4, cat:'place',
+    mnemonic:'A <strong>vertical line piercing a rectangle</strong> exactly in the middle — dead center.',
+    examples:[{jp:'中',rom:'naka',en:'inside / middle'},{jp:'中学校',rom:'chuugakkou',en:'middle school'}]},
+  { char:'国', meaning:'Country', on:'コク', kun:'くに', strokes:8, cat:'place',
+    mnemonic:'A <strong>jade gem (王+dot) enclosed by a border</strong> — a precious land protected by its borders.',
+    examples:[{jp:'日本国',rom:'nihonkoku',en:'Japan (formal)'},{jp:'外国',rom:'gaikoku',en:'foreign country'}]},
+  { char:'門', meaning:'Gate', on:'モン', kun:'かど', strokes:8, cat:'place',
+    mnemonic:'Literally <strong>two door panels of a traditional gate</strong> — a symmetric structure you pass through.',
+    examples:[{jp:'門',rom:'mon',en:'gate'},{jp:'専門',rom:'senmon',en:'specialty'}]},
+  { char:'校', meaning:'School', on:'コウ', kun:'—', strokes:10, cat:'place',
+    mnemonic:'Wood (木) + cross/compare (交): <strong>a wooden place where ideas cross</strong> and knowledge grows.',
+    examples:[{jp:'学校',rom:'gakkō',en:'school'},{jp:'高校',rom:'kōkō',en:'high school'}]},
+  { char:'店', meaning:'Shop', on:'テン', kun:'みせ', strokes:8, cat:'place',
+    mnemonic:'A <strong>roof over an occupied spot</strong> — someone set up shelter and started selling things.',
+    examples:[{jp:'お店',rom:'omise',en:'shop'},{jp:'本店',rom:'honten',en:'main store'}]},
+  { char:'道', meaning:'Road / Way', on:'ドウ', kun:'みち', strokes:12, cat:'place',
+    mnemonic:'Moving (辶) + head (首): your <strong>head leads you along the path</strong> — the way forward.',
+    examples:[{jp:'道',rom:'michi',en:'road / way'},{jp:'北海道',rom:'Hokkaidō',en:'Hokkaido'}]},
+  { char:'外', meaning:'Outside', on:'ガイ', kun:'そと', strokes:5, cat:'place',
+    mnemonic:'Evening (夕) + divination (卜): <strong>a fortune teller outside</strong> at dusk, away from home.',
+    examples:[{jp:'外',rom:'soto',en:'outside'},{jp:'外国',rom:'gaikoku',en:'foreign country'}]},
+
+  // THINGS
+  { char:'本', meaning:'Book / Origin', on:'ホン', kun:'もと', strokes:5, cat:'things',
+    mnemonic:'A tree (木) with a <strong>mark at the roots</strong> — the origin, the root. Books are roots of knowledge.',
+    examples:[{jp:'本',rom:'hon',en:'book'},{jp:'日本',rom:'nihon',en:'Japan (root of the sun)'}]},
+  { char:'円', meaning:'Circle / Yen', on:'エン', kun:'まる-い', strokes:4, cat:'things',
+    mnemonic:'A <strong>perfect round enclosure</strong> — a circle. Japan\'s round coins gave the currency its name.',
+    examples:[{jp:'円',rom:'en',en:'yen'},{jp:'百円',rom:'hyakuen',en:'100 yen'}]},
+  { char:'車', meaning:'Car / Vehicle', on:'シャ', kun:'くるま', strokes:7, cat:'things',
+    mnemonic:'A top-down view of a <strong>cart with axle and wheels</strong> — an ancient wheel-cart seen from above.',
+    examples:[{jp:'車',rom:'kuruma',en:'car'},{jp:'電車',rom:'densha',en:'train'}]},
+  { char:'金', meaning:'Gold / Money', on:'キン, コン', kun:'かね', strokes:8, cat:'things',
+    mnemonic:'A <strong>mine with gold nuggets (dots)</strong> below the earth — precious metal buried underground.',
+    examples:[{jp:'お金',rom:'okane',en:'money'},{jp:'金曜日',rom:'kinyoubi',en:'Friday'}]},
+  { char:'食', meaning:'Food / Eat', on:'ショク', kun:'た-べる', strokes:9, cat:'things',
+    mnemonic:'A lid covering a mouth with a spoon — a <strong>covered pot of food</strong> ready to be eaten.',
+    examples:[{jp:'食べる',rom:'taberu',en:'to eat'},{jp:'食事',rom:'shokuji',en:'meal'}]},
+  { char:'語', meaning:'Language / Word', on:'ゴ', kun:'かた-る', strokes:14, cat:'things',
+    mnemonic:'Say (言) + I/me (吾): the <strong>words I myself say</strong> — personal language.',
+    examples:[{jp:'日本語',rom:'nihongo',en:'Japanese language'},{jp:'英語',rom:'eigo',en:'English'}]},
+  { char:'字', meaning:'Letter / Character', on:'ジ', kun:'あざ', strokes:6, cat:'things',
+    mnemonic:'A <strong>child (子) under a roof</strong> — a child sitting indoors, learning to write characters.',
+    examples:[{jp:'漢字',rom:'kanji',en:'kanji'},{jp:'文字',rom:'moji',en:'letter / character'}]},
+  { char:'名', meaning:'Name', on:'メイ, ミョウ', kun:'な', strokes:6, cat:'things',
+    mnemonic:'Evening (夕) + mouth (口): in the dark evening, you <strong>call out someone\'s name</strong> with your mouth.',
+    examples:[{jp:'名前',rom:'namae',en:'name'},{jp:'名刺',rom:'meishi',en:'business card'}]},
+  { char:'気', meaning:'Energy / Spirit', on:'キ, ケ', kun:'—', strokes:6, cat:'things',
+    mnemonic:'Steam rising from a pot of rice — <strong>life energy rising</strong>, the vital force in all things.',
+    examples:[{jp:'天気',rom:'tenki',en:'weather'},{jp:'元気',rom:'genki',en:'healthy / energetic'}]},
+  { char:'電', meaning:'Electricity', on:'デン', kun:'—', strokes:13, cat:'things',
+    mnemonic:'Rain (雨) cloud with <strong>lightning bolt</strong> (乙-like bottom) — electricity from a stormy sky.',
+    examples:[{jp:'電車',rom:'densha',en:'train'},{jp:'電話',rom:'denwa',en:'telephone'}]},
+  { char:'話', meaning:'Story / Talk', on:'ワ', kun:'はな-す', strokes:13, cat:'things',
+    mnemonic:'Say (言) + tongue (舌): your <strong>tongue turning words</strong> into flowing conversation.',
+    examples:[{jp:'電話',rom:'denwa',en:'telephone'},{jp:'話す',rom:'hanasu',en:'to speak'}]},
+  { char:'何', meaning:'What / How many', on:'カ', kun:'なに, なん', strokes:7, cat:'things',
+    mnemonic:'Person (人) + can/may (可): <strong>a person asking permission</strong> — "what may I do?"',
+    examples:[{jp:'何',rom:'nani',en:'what'},{jp:'何時',rom:'nanji',en:'what time'}]},
+  { char:'力', meaning:'Power / Strength', on:'リョク, リキ', kun:'ちから', strokes:2, cat:'things',
+    mnemonic:'A <strong>flexed arm muscle</strong> — the curved stroke is the bicep, the short stroke is the forearm.',
+    examples:[{jp:'力',rom:'chikara',en:'power'},{jp:'努力',rom:'doryoku',en:'effort'}]},
+
+  // VERBS / ACTIONS
+  { char:'見', meaning:'See / Look', on:'ケン', kun:'み-る', strokes:7, cat:'verbs',
+    mnemonic:'An <strong>eye (目) on top of legs</strong> — a walking pair of eyes, actively looking around.',
+    examples:[{jp:'見る',rom:'miru',en:'to see'},{jp:'見物',rom:'kenbutsu',en:'sightseeing'}]},
+  { char:'聞', meaning:'Hear / Listen', on:'ブン, モン', kun:'き-く', strokes:14, cat:'verbs',
+    mnemonic:'An <strong>ear (耳) inside a gate (門)</strong> — pressing your ear to the gate to listen to what\'s inside.',
+    examples:[{jp:'聞く',rom:'kiku',en:'to hear / ask'},{jp:'新聞',rom:'shinbun',en:'newspaper'}]},
+  { char:'言', meaning:'Say / Speak', on:'ゲン', kun:'い-う, こと', strokes:7, cat:'verbs',
+    mnemonic:'A <strong>mouth (口) with sound waves</strong> above — speech vibrating out of an open mouth.',
+    examples:[{jp:'言う',rom:'iu',en:'to say'},{jp:'言語',rom:'gengo',en:'language'}]},
+  { char:'行', meaning:'Go / Conduct', on:'コウ, ギョウ', kun:'い-く, おこな-う', strokes:6, cat:'verbs',
+    mnemonic:'A <strong>crossroads with a traveler\'s step</strong> — the character looks like an intersection where paths diverge.',
+    examples:[{jp:'行く',rom:'iku',en:'to go'},{jp:'銀行',rom:'ginkou',en:'bank'}]},
+  { char:'来', meaning:'Come', on:'ライ', kun:'く-る', strokes:7, cat:'verbs',
+    mnemonic:'A <strong>person (人) arriving at a tree</strong> — the traveler comes home to rest under the tree.',
+    examples:[{jp:'来る',rom:'kuru',en:'to come'},{jp:'来年',rom:'rainen',en:'next year'}]},
+  { char:'出', meaning:'Exit / Go out', on:'シュツ', kun:'で-る, だ-す', strokes:5, cat:'verbs',
+    mnemonic:'A <strong>sprout pushing out of the ground</strong> — new growth emerging upward and outward.',
+    examples:[{jp:'出る',rom:'deru',en:'to exit'},{jp:'出口',rom:'deguchi',en:'exit'}]},
+  { char:'入', meaning:'Enter', on:'ニュウ', kun:'い-る, はい-る', strokes:2, cat:'verbs',
+    mnemonic:'Two strokes <strong>converging inward</strong> — like two walls of a funnel guiding you into an entrance.',
+    examples:[{jp:'入る',rom:'hairu',en:'to enter'},{jp:'入口',rom:'iriguchi',en:'entrance'}]},
+  { char:'休', meaning:'Rest', on:'キュウ', kun:'やす-む', strokes:6, cat:'verbs',
+    mnemonic:'A <strong>person leaning against a tree</strong> — taking a well-earned break in the shade.',
+    examples:[{jp:'休む',rom:'yasumu',en:'to rest'},{jp:'休日',rom:'kyuujitsu',en:'holiday'}]},
+  { char:'食', meaning:'Eat', on:'ショク', kun:'た-べる', strokes:9, cat:'verbs',
+    mnemonic:'A lid on a pot with a <strong>mouth ready to eat</strong> — the meal is covered and ready.',
+    examples:[{jp:'食べる',rom:'taberu',en:'to eat'},{jp:'食堂',rom:'shokudou',en:'cafeteria'}]},
+  { char:'飲', meaning:'Drink', on:'イン', kun:'の-む', strokes:12, cat:'verbs',
+    mnemonic:'Food (食) + exhale (欠) — <strong>gulping down liquid</strong> while your throat opens wide.',
+    examples:[{jp:'飲む',rom:'nomu',en:'to drink'},{jp:'飲み物',rom:'nomimono',en:'drink / beverage'}]},
+  { char:'書', meaning:'Write', on:'ショ', kun:'か-く', strokes:10, cat:'verbs',
+    mnemonic:'A <strong>brush tip (聿) painting over a sun (日)</strong> — writing light into the world with a brush.',
+    examples:[{jp:'書く',rom:'kaku',en:'to write'},{jp:'図書館',rom:'toshokan',en:'library'}]},
+  { char:'読', meaning:'Read', on:'ドク', kun:'よ-む', strokes:14, cat:'verbs',
+    mnemonic:'Say (言) + sell (売): <strong>reading means selling the words</strong> back to your mind.',
+    examples:[{jp:'読む',rom:'yomu',en:'to read'},{jp:'読書',rom:'dokusho',en:'reading (books)'}]},
+  { char:'学', meaning:'Study / Learn', on:'ガク', kun:'まな-ぶ', strokes:8, cat:'verbs',
+    mnemonic:'Hands above a child (子) — <strong>adults guiding the hands of a child</strong> as they learn.',
+    examples:[{jp:'学ぶ',rom:'manabu',en:'to learn'},{jp:'学校',rom:'gakkou',en:'school'}]},
+  { char:'買', meaning:'Buy', on:'バイ', kun:'か-う', strokes:12, cat:'verbs',
+    mnemonic:'Net (罒) over shells (貝) — <strong>casting a net over precious shells</strong> (ancient currency) to buy things.',
+    examples:[{jp:'買う',rom:'kau',en:'to buy'},{jp:'買い物',rom:'kaimono',en:'shopping'}]},
+];
+
+// Remove duplicate 食
+const seen = new Set();
+const KANJI_DATA = KANJI.filter(k => {
+  if (seen.has(k.char + k.meaning)) return false;
+  seen.add(k.char + k.meaning);
+  return true;
+});
+
+// ────────────────────────────────────────────────
+// STATE
+// ────────────────────────────────────────────────
+let mastered = new Set(JSON.parse(localStorage.getItem('mastered_kanji') || '[]'));
+let currentFilter = 'all';
+let currentSection = 'all';
+let detailKanji = null;
+
+// Quiz state
+let qCorrect = 0, qWrong = 0, qTotal = 0, qAnswered = false;
+
+// ────────────────────────────────────────────────
+// RENDER GRID
+// ────────────────────────────────────────────────
+function renderGrid(list) {
+  const grid = document.getElementById('kanji-grid');
+  const empty = document.getElementById('empty-msg');
+  grid.innerHTML = '';
+  if (!list.length) { empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  list.forEach(k => {
+    const card = document.createElement('div');
+    card.className = 'kanji-card' + (mastered.has(k.char) ? ' mastered' : '');
+    card.innerHTML = `
+      <div class="kc-top">
+        <span class="kc-char">${k.char}</span>
+        <span class="kc-stroke">${k.strokes} stroke${k.strokes > 1 ? 's' : ''}</span>
+      </div>
+      <div class="kc-body">
+        <div class="kc-meaning">${k.meaning}</div>
+        <div class="kc-reading">
+          <span class="reading-tag">on: ${k.on}</span>
+          <span class="reading-tag">kun: ${k.kun}</span>
+        </div>
+        <div class="kc-mnemonic">${k.mnemonic.replace(/<strong>/g,'').replace(/<\/strong>/g,'')}</div>
+      </div>
+    `;
+    card.onclick = () => openDetail(k);
+    grid.appendChild(card);
+  });
+}
+
+function getFilteredList() {
+  let list = KANJI_DATA;
+  if (currentFilter === 'mastered') list = list.filter(k => mastered.has(k.char));
+  else if (currentFilter !== 'all') list = list.filter(k => k.cat === currentFilter);
+  const q = document.getElementById('search-input').value.trim().toLowerCase();
+  if (q) list = list.filter(k => k.char.includes(q) || k.meaning.toLowerCase().includes(q) || k.on.toLowerCase().includes(q) || k.kun.toLowerCase().includes(q));
+  return list;
+}
+
+function refreshGrid() { renderGrid(getFilteredList()); }
+
+// ────────────────────────────────────────────────
+// NAVIGATION
+// ────────────────────────────────────────────────
+function switchSection(name) {
+  currentSection = name;
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById('sec-' + (name === 'quiz' ? 'quiz' : 'all')).classList.add('active');
+
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  const btn = document.getElementById('nav-' + name);
+  if (btn) btn.classList.add('active');
+
+  if (name === 'quiz') {
+    document.getElementById('section-title').textContent = '漢字クイズ';
+    document.getElementById('section-desc').textContent = 'Multiple choice kanji quiz';
+    document.getElementById('search-input').style.display = 'none';
+    if (qTotal === 0) nextQuestion();
+  } else {
+    document.getElementById('search-input').style.display = '';
+    currentFilter = name;
+    updateTopbar();
+    refreshGrid();
+  }
+}
+
+function filterCategory(cat) {
+  currentFilter = cat;
+  currentSection = 'all';
+  document.getElementById('sec-all').classList.add('active');
+  document.getElementById('sec-quiz').classList.remove('active');
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  const btn = document.getElementById('nav-' + cat);
+  if (btn) btn.classList.add('active');
+  document.getElementById('search-input').style.display = '';
+  updateTopbar();
+  refreshGrid();
+}
+
+function updateTopbar() {
+  const labels = {
+    all:'All N5 Kanji', mastered:'Mastered Kanji',
+    numbers:'Numbers', time:'Time & Date', people:'People',
+    nature:'Nature', body:'Body Parts', place:'Places', things:'Things', verbs:'Actions & Verbs'
+  };
+  const counts = getFilteredList().length;
+  document.getElementById('section-title').textContent = labels[currentFilter] || 'Kanji';
+  document.getElementById('section-desc').textContent = `${counts} kanji · Click any card for details & mnemonic`;
+}
+
+function handleSearch() { refreshGrid(); }
+
+// ────────────────────────────────────────────────
+// DETAIL PANEL
+// ────────────────────────────────────────────────
+function openDetail(k) {
+  detailKanji = k;
+  document.getElementById('dp-char').textContent = k.char;
+  document.getElementById('dp-meaning').textContent = k.meaning;
+  document.getElementById('dp-strokes').textContent = `${k.strokes} strokes · ${k.cat}`;
+  document.getElementById('dp-mnemonic').innerHTML = k.mnemonic;
+
+  const readingsEl = document.getElementById('dp-readings');
+  readingsEl.innerHTML = `
+    <span class="pill-label">on</span>
+    ${k.on.split(',').map(r => `<span class="dp-reading-pill pill-on">${r.trim()}</span>`).join('')}
+    <span class="pill-label" style="margin-left:6px">kun</span>
+    ${k.kun === '—' ? '<span style="color:var(--muted);font-size:12px">—</span>' : k.kun.split(',').map(r => `<span class="dp-reading-pill pill-kun">${r.trim()}</span>`).join('')}
+  `;
+
+  const exList = document.getElementById('dp-examples');
+  exList.innerHTML = k.examples.map(ex => `
+    <div class="example-item">
+      <div class="ex-jp">${ex.jp}</div>
+      <div class="ex-rom">${ex.rom}</div>
+      <div class="ex-en">${ex.en}</div>
+    </div>
+  `).join('');
+
+  const masterBtn = document.getElementById('dp-master-btn');
+  masterBtn.textContent = mastered.has(k.char) ? 'Unmark as Mastered' : 'Mark as Mastered ✓';
+  masterBtn.className = 'dp-btn ' + (mastered.has(k.char) ? 'secondary' : 'primary');
+
+  document.getElementById('overlay').classList.add('open');
+}
+
+function closeDetail() { document.getElementById('overlay').classList.remove('open'); }
+function closeOverlay(e) { if (e.target === document.getElementById('overlay')) closeDetail(); }
+
+function toggleMaster() {
+  if (!detailKanji) return;
+  if (mastered.has(detailKanji.char)) mastered.delete(detailKanji.char);
+  else mastered.add(detailKanji.char);
+  localStorage.setItem('mastered_kanji', JSON.stringify([...mastered]));
+  updateStats();
+  refreshGrid();
+  openDetail(detailKanji);
+}
+
+// ────────────────────────────────────────────────
+// STATS
+// ────────────────────────────────────────────────
+function updateStats() {
+  const m = mastered.size;
+  const t = KANJI_DATA.length;
+  document.getElementById('stat-mastered').textContent = m;
+  document.getElementById('stat-total').textContent = t;
+  document.getElementById('nc-mastered').textContent = m;
+  document.getElementById('sidebar-prog').style.width = (m/t*100).toFixed(1) + '%';
+  document.getElementById('sidebar-prog-text').textContent = `${m} / ${t} mastered`;
+}
+
+// ────────────────────────────────────────────────
+// QUIZ
+// ────────────────────────────────────────────────
+function shuffle(arr) { return [...arr].sort(() => Math.random() - 0.5); }
+
+function nextQuestion() {
+  qAnswered = false;
+  document.getElementById('q-feedback').textContent = '';
+  document.getElementById('q-next').style.display = 'none';
+
+  const pool = KANJI_DATA;
+  const target = pool[Math.floor(Math.random() * pool.length)];
+  document.getElementById('q-char').textContent = target.char;
+
+  let opts = [target.meaning];
+  while (opts.length < 4) {
+    const r = pool[Math.floor(Math.random() * pool.length)].meaning;
+    if (!opts.includes(r)) opts.push(r);
+  }
+  opts = shuffle(opts);
+
+  const container = document.getElementById('q-opts');
+  container.innerHTML = '';
+  opts.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'q-opt';
+    btn.textContent = opt;
+    btn.onclick = () => {
+      if (qAnswered) return;
+      qAnswered = true;
+      qTotal++;
+      container.querySelectorAll('.q-opt').forEach(b => b.disabled = true);
+      if (opt === target.meaning) {
+        btn.classList.add('correct');
+        qCorrect++;
+        document.getElementById('q-feedback').innerHTML = '<span class="feedback-correct">正解！ Correct!</span>';
+      } else {
+        btn.classList.add('wrong');
+        container.querySelectorAll('.q-opt').forEach(b => { if (b.textContent === target.meaning) b.classList.add('correct'); });
+        document.getElementById('q-feedback').innerHTML = `<span class="feedback-wrong">The answer was "${target.meaning}"</span>`;
+      }
+      qWrong = qTotal - qCorrect;
+      document.getElementById('q-correct').textContent = qCorrect;
+      document.getElementById('q-wrong').textContent = qWrong;
+      document.getElementById('q-total').textContent = qTotal;
+      document.getElementById('qpfill').style.width = Math.min(100, (qTotal / 20) * 100) + '%';
+      document.getElementById('qpnum').textContent = `${qTotal} / 20`;
+      document.getElementById('q-next').style.display = 'inline-block';
+    };
+    container.appendChild(btn);
+  });
+}
+
+// ────────────────────────────────────────────────
+// INIT
+// ────────────────────────────────────────────────
+updateStats();
+refreshGrid();
+</script>
+</body>
+</html>
